@@ -1,0 +1,118 @@
+---
+title: Getting started with QuikQuan
+author: An introductory tutorial with examples
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with QuikQuan}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This package provides tools for fitting kernel quantile regression.
+
+The strengths and improvements that this package offers relative to other quantile regression packages are as follows:
+
+* Compiled Fortran code significantly speeds up the kernel quantile regression estimation process.
+
+* Solve non-crossing kernel quantile regression.
+
+For this getting-started vignette, first, we will use a real data set named as `GAGurine`
+in the package `MASS`, which collects the concentration of chemical GAGs in the urine of 314 children aged 0 to 17 years.
+We used the concentration of GAG as the response variable.
+
+```{r}
+library(QuikQuan)
+library(MASS)
+data(GAGurine)
+x <- as.matrix(GAGurine$Age)
+y <- GAGurine$GAG
+```
+
+## `fastkqr()`
+Given an input matrix `x`, a quantile level `tau`, and a response vector `y`,
+a kernel quantile regression model is estimated for a sequence of penalty
+parameter values. The other main arguments the users might supply are:
+
+* `lambda`: a user-supplied `lambda` sequence.
+* `tau`: a user-supplied `tau` value for a quantile level.
+* `is_exact`: exact or approximated solutions.
+
+```{r}
+lambda <- 10^(seq(1, -4, length.out=10))
+fit <- fastkqr(x, y, lambda=lambda, tau=0.1, is_exact=TRUE)
+```
+
+## `cv.fastkqr()`
+
+This function performs k-fold cross-validation (cv). It takes the same
+arguments as `fastkqr`.
+
+```{r}
+cv.fit <- cv.fastkqr(x, y, lambda=lambda, tau=0.1)
+```
+
+## Methods
+
+A number of S3 methods are provided for `fastkqr` object.
+
+* `coef()` and `predict()` return a matrix of coefficients and predictions $\hat{y}$ given a matrix `X` at each lambda respectively. The optional `s` argument may provide a specific value of $\lambda$ (not necessarily
+part of the original sequence).
+
+
+```{r}
+coef <- coef(fit, s = c(0.02, 0.03))
+predict(fit, x, tail(x), s = fit$lambda[2:3])
+```
+
+## `fastnckqr()`
+Given an input matrix `x`, a sequence of quantile levels `tau`, and a response vector `y`,
+a non-crossing kernel quantile regression model is estimated for two sequences of penalty
+parameter values. It takes the same arguments `x`, `y`,`is_exact`, which are specified above.
+The other main arguments the users might supply are:
+
+* `tau`: a user-supplied `tau` sequence for quantile levels.
+
+* `lambda2`: a user-supplied `lambda1` sequence for the L2 penalty.
+
+* `lambda1`: a user-supplied `lambda2` sequence for the smooth ReLU penalty.
+
+```{r}
+l2 <- 1e-4
+tau <- c(0.1, 0.3, 0.5, 0.7, 0.9)
+l1_list <- 10^seq(-8, 2, length.out=10)
+fit1 <- fastnckqr(x ,y, lambda1 = l1_list, lambda2 = l2,  tau = tau)
+```
+
+## `cv.fastnckqr()`
+
+This function performs k-fold cross-validation (cv). It takes the same
+arguments as `fastnckqr`.
+
+```{r}
+l2_list <- c(1e-3, 1e-4)
+cv.fit1 <- cv.fastnckqr(x, y, lambda1=l1_list, lambda2=l2, tau=tau)
+```
+
+## Methods
+
+A number of S3 methods are provided for `fastnckqr` object.
+
+* `coef()` and `predict()` return an array of coefficients and predictions $\hat{y}$ given a matrix `X` and `lambda2` at each lambda1 respectively. The optional `s1` argument may provide a specific value of $\lambda_1$ (not necessarily
+part of the original sequence).
+
+* `cross.fastnckqr()` and `objective.fastnckqr` return a vector of crossing numbers and objective values given a matrix `X` and `lambda2` at each lambda1 respectively. 
+
+
+```{r}
+cross <- cross.fastnckqr(fit1, x, s2=l2, s1=l1_list)
+obj <- objective.fastnckqr(fit1, x, y, s2=l2)
+coef <- coef(fit1, s2=1e-4, s1 = l1_list[2:3])
+predict(fit1, x, tail(x), s1=l1_list[1:3], s2=l2)
+```
