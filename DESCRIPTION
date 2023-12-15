@@ -1,0 +1,18 @@
+Package: QuikQuan
+Type: Package
+Title: Algorithm for kernel quantile regression
+Version: 1.0.0
+Date: 2023-06-17
+Author: Qian Tang <qian-tang@uiowa.edu>, Yuwen Gu <yuwen.gu@uconn.edu>, Boxiang Wang <boxiang-wang@uiowa.edu>
+Maintainer: Qian Tang <qian-tang@uiowa.edu>
+Description: The package implements very efficient algorithm for fitting and tuning kernel quantile regression.
+Depends: methods
+Imports: graphics, grDevices, stats, utils, dotCall64, rlang
+License: GPL-2
+NeedsCompilation: yes
+RoxygenNote: 7.2.3
+Encoding: UTF-8
+Packaged: 2023-09-19 15:21:20 UTC; qtang7
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
